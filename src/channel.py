@@ -25,10 +25,6 @@ class Channel:
     def channel_id(self):
         return self.__channel_id
 
-    @channel_id.setter
-    def channel_id(self, new_channel_id):
-        print("Error: Cannot change channel_id.")
-
     def update_info(self):
         try:
             request = self.youtube.channels().list(
