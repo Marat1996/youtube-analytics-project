@@ -5,14 +5,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 class Channel:
     """Класс для ютуб-канала"""
 
     def __init__(self, channel_id: str) -> None:
-        """Экземпляр инициализируется id канала. 
-        Данные будут подтягиваться по API при первом запросе."""
-        self.description = None
+        """Экземпляр инициализируется id канала. Данные будут подтягиваться по API при первом запросе."""
         self._title = None
         self.__channel_id = channel_id
         self.api_key = os.getenv('YOU_TUBE_API_KEY')
@@ -23,6 +20,10 @@ class Channel:
         if self._title is None:
             self.update_info()
         return self._title
+
+    @property
+    def channel_id(self):
+        return self.__channel_id
 
     def update_info(self):
         try:
@@ -49,8 +50,9 @@ class Channel:
             print(f"An error occurred: {str(e)}")
 
     @classmethod
-    def get_service(cls, channel_id):
-        return cls(channel_id=channel_id)
+    def get_service(cls):
+        real_channel_id = "UC-OVMPlMA3-YCIeg4z5z23A"
+        return cls(channel_id=real_channel_id)
 
     def to_json(self, filename):
         data = {
