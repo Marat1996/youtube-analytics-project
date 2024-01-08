@@ -1,20 +1,20 @@
 import json
-import os
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
+
 
 class Channel:
     """Класс для ютуб-канала"""
 
-    def __init__(self, channel_id: str, api_key: str) -> None:
+    def __init__(self, channel_id: str) -> None:
         """Экземпляр инициализируется id канала. Данные будут подтягиваться по API при первом запросе."""
+        self.description = None
         self._title = None
         self.__channel_id = channel_id
-        self.api_key = api_key
-        self.youtube = build('youtube', 'v3', developerKey=self.api_key)
-        self.update_info()
+        self._api_key = os.getenv('YOU_TUBE_API_KEY')
 
     @property
     def title(self):
@@ -22,9 +22,14 @@ class Channel:
             self.update_info()
         return self._title
 
+    @property
+    def channel_id(self):
+        return self.__channel_id
+
     def update_info(self):
         try:
-            request = self.youtube.channels().list(
+            youtube = self.get_service()
+            request = youtube.channels().list(
                 part="snippet,statistics",
                 id=self.__channel_id
             )
@@ -48,10 +53,9 @@ class Channel:
             print(f"An error occurred: {str(e)}")
 
     @classmethod
-    def get_service(cls, channel_id, api_key=None):
-        if api_key is None:
-            api_key = os.getenv('YOU_TUBE_API_KEY')
-        return cls(channel_id=channel_id, api_key=api_key)
+    def get_service(cls):
+        api_key = os.getenv('YOU_TUBE_API_KEY')
+        return build('youtube', 'v3', developerKey=api_key)
 
     def to_json(self, filename):
         data = {
