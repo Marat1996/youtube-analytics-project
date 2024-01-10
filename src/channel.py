@@ -1,7 +1,7 @@
 import json
+import os
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
-import os
 
 load_dotenv()
 
@@ -9,12 +9,13 @@ load_dotenv()
 class Channel:
     """Класс для ютуб-канала"""
 
-    def __init__(self, channel_id: str) -> None:
+    def __init__(self, channel_id: str, api_key: str = None) -> None:
         """Экземпляр инициализируется id канала. Данные будут подтягиваться по API при первом запросе."""
-        self.description = None
         self._title = None
         self.__channel_id = channel_id
-        self._api_key = os.getenv('YOU_TUBE_API_KEY')
+        self.api_key = api_key or os.getenv('YOU_TUBE_API_KEY')
+        self.youtube = None  # Убираем построение youtube здесь
+        self.update_info()
 
     @property
     def title(self):
@@ -22,14 +23,12 @@ class Channel:
             self.update_info()
         return self._title
 
-    @property
-    def channel_id(self):
-        return self.__channel_id
-
     def update_info(self):
         try:
-            youtube = self.get_service()
-            request = youtube.channels().list(
+            if self.youtube is None:
+                self.youtube = build('youtube', 'v3', developerKey=self.api_key)
+
+            request = self.youtube.channels().list(
                 part="snippet,statistics",
                 id=self.__channel_id
             )
@@ -53,9 +52,8 @@ class Channel:
             print(f"An error occurred: {str(e)}")
 
     @classmethod
-    def get_service(cls):
-        api_key = os.getenv('YOU_TUBE_API_KEY')
-        return build('youtube', 'v3', developerKey=api_key)
+    def get_service(cls, channel_id, api_key=None):
+        return cls(channel_id=channel_id, api_key=api_key)
 
     def to_json(self, filename):
         data = {
@@ -71,6 +69,6 @@ class Channel:
         with open(filename, 'w') as json_file:
             json.dump(data, json_file, indent=2)
 
-    def update_channel_id(self, new_channel_id):
-        self.__channel_id = new_channel_id
-        self.update_info()
+    @property
+    def channel_id(self):
+        raise AttributeError("Property 'channel_id' of 'Channel' object has no setter")
