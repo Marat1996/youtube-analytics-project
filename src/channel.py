@@ -13,7 +13,7 @@ class Channel:
         self._title = None
         self.__channel_id = channel_id
         self.api_key = os.getenv('YOU_TUBE_API_KEY')
-        self.youtube = None  # Убираем построение youtube здесь
+        self.youtube = None
         self.update_info()
 
     @property
@@ -50,9 +50,8 @@ class Channel:
         except Exception as e:
             print(f"An error occurred: {str(e)}")
 
-    @classmethod
-    def get_service(cls, channel_id):
-        return cls(channel_id=channel_id)
+    def get_service(self):
+        return self
 
     def to_json(self, filename):
         data = {
