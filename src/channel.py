@@ -5,53 +5,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 class Channel:
     """Класс для ютуб-канала"""
+    api_key = os.getenv('YOU_TUBE_API_KEY')
 
     def __init__(self, channel_id: str) -> None:
         """Экземпляр инициализируется id канала. Данные будут подтягиваться по API при первом запросе."""
-        self._title = None
         self.__channel_id = channel_id
-        self.api_key = os.getenv('YOU_TUBE_API_KEY')
-        self.youtube = None
         self.update_info()
 
-    @property
-    def title(self):
-        if self._title is None:
-            self.update_info()
-        return self._title
-
     def update_info(self):
-        try:
-            if self.youtube is None:
-                self.youtube = build('youtube', 'v3', developerKey=self.api_key)
+        request = self.get_service().channels().list(
+            part="snippet,statistics",
+            id=self.__channel_id
+        )
+        response = request.execute()
 
-            request = self.youtube.channels().list(
-                part="snippet,statistics",
-                id=self.__channel_id
-            )
-            response = request.execute()
+        channel_info = response.get('items', [])
+        if channel_info:
+            channel_info = channel_info[0]
+            snippet = channel_info.get('snippet', {})
+            statistics = channel_info.get('statistics', {})
 
-            channel_info = response.get('items', [])
-            if channel_info:
-                channel_info = channel_info[0]
-                snippet = channel_info.get('snippet', {})
-                statistics = channel_info.get('statistics', {})
+            self.title = snippet.get('title', 'N/A')
+            self.description = snippet.get('description', 'N/A')
+            self.url = f"https://www.youtube.com/channel/{self.__channel_id}"
+            self.subscribers = int(statistics.get('subscriberCount', 0))
+            self.video_count = int(statistics.get('videoCount', 0))
+            self.view_count = int(statistics.get('viewCount', 0))
 
-                self._title = snippet.get('title', 'N/A')
-                self.description = snippet.get('description', 'N/A')
-                self.url = f"https://www.youtube.com/channel/{self.__channel_id}"
-                self.subscribers = int(statistics.get('subscriberCount', 0))
-                self.video_count = int(statistics.get('videoCount', 0))
-                self.view_count = int(statistics.get('viewCount', 0))
-            else:
-                print(f"Channel information not available for channel_id: {self.__channel_id}")
-        except Exception as e:
-            print(f"An error occurred: {str(e)}")
-
-    def get_service(self):
-        return self
+    @classmethod
+    def get_service(cls):
+        return build('youtube', 'v3', developerKey=cls.api_key)
 
     def to_json(self, filename):
         data = {
@@ -69,4 +55,8 @@ class Channel:
 
     @property
     def channel_id(self):
-        raise AttributeError("Property 'channel_id' of 'Channel' object has no setter")
+        return self.__channel_id
+
+    # @channel_id.setter
+    # def channel_id(self, new_id):
+    #     self.__channel_id = new_id
