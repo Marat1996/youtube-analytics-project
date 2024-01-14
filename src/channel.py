@@ -57,6 +57,49 @@ class Channel:
     def channel_id(self):
         return self.__channel_id
 
-    # @channel_id.setter
-    # def channel_id(self, new_id):
-    #     self.__channel_id = new_id
+    def __str__(self):
+        return f"{self.title} ({self.url})"
+
+    def __add__(self, other):
+        """Метод для сложения каналов."""
+        if isinstance(other, Channel):
+            return self.subscribers + other.subscribers
+        return NotImplemented
+
+    def __sub__(self, other):
+        """Метод для вычитания каналов."""
+        if isinstance(other, Channel):
+            return self.subscribers - other.subscribers
+        return NotImplemented
+
+    def __eq__(self, other):
+        """Метод для сравнения каналов на равенство."""
+        if isinstance(other, Channel):
+            return self.subscribers == other.subscribers
+        return NotImplemented
+
+    def __lt__(self, other):
+        """Метод для сравнения каналов: меньше."""
+        if isinstance(other, Channel):
+            return self.subscribers < other.subscribers
+        return NotImplemented
+
+    def __le__(self, other):
+        """Метод для сравнения каналов: меньше или равно."""
+        if isinstance(other, Channel):
+            return self.subscribers <= other.subscribers
+        return NotImplemented
+
+    def __gt__(self, other):
+        """Метод для сравнения каналов: больше."""
+        if isinstance(other, Channel):
+            return self.subscribers > other.subscribers
+        return NotImplemented
+
+    def __ge__(self, other):
+        """Метод для сравнения каналов: больше или равно."""
+        if isinstance(other, Channel):
+            return self.subscribers >= other.subscribers
+        return NotImplemented
+
+
