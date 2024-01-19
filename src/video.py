@@ -1,25 +1,25 @@
-from dotenv import load_dotenv
+from datetime import timedelta
 
 from src.channel import Channel
 
-load_dotenv()
 
 
 class Video:
-    """Класс для видео"""
-
-    def __init__(self, video_id: str) -> None:
-        """Экземпляр инициализируется id видео. Данные будут подтягиваться по API при первом запросе."""
+    def __init__(self, video_id, title=None, video_url=None, view_count=None, like_count=None, duration=None):
         self.__video_id = video_id
-        self.title = None
-        self.video_url = None
-        self.view_count = None
-        self.like_count = None
-        self.update_info()
+        self.title = title
+        self.video_url = video_url
+        self.view_count = view_count
+        self.like_count = like_count
+        self.duration = duration
+        self.url = f"https://www.youtube.com/watch?v={video_id}"  # Добавьте эту строку
+
+        if not all((title, video_url, view_count, like_count, duration)):
+            self.update_info()
 
     def update_info(self):
         request = Channel.get_service().videos().list(
-            part="snippet,statistics",
+            part="snippet,statistics,contentDetails",
             id=self.__video_id
         )
         response = request.execute()
@@ -29,38 +29,31 @@ class Video:
             video_info = video_info[0]
             snippet = video_info.get('snippet', {})
             statistics = video_info.get('statistics', {})
+            content_details = video_info.get('contentDetails', {})
 
-            self.title = snippet.get('title', 'N/A')
+            self.title = snippet.get('title')
             self.video_url = f"https://www.youtube.com/watch?v={self.__video_id}"
-            self.view_count = int(statistics.get('viewCount', 0))
-            self.like_count = int(statistics.get('likeCount', 0))
+            self.view_count = statistics.get('viewCount')
 
-    def __str__(self):
-        return f"{self.title}"
+            # Обработка случая, когда информация о лайках отсутствует
+            self.like_count = statistics.get('likeCount', 0)
 
+            duration_iso = content_details.get('duration', 'PT0S')
+            self.duration = self._parse_duration(duration_iso)
 
-class PLVideo(Video):
-    """Класс для видео с информацией о плейлисте"""
+    def _parse_duration(self, duration_iso):
+        time_elements = duration_iso.split('T')[1].split(':')
+        hours, minutes, seconds = 0, 0, 0
 
-    def __init__(self, video_id: str, playlist_id: str) -> None:
-        """Экземпляр инициализируется id видео и id плейлиста."""
-        super().__init__(video_id)
-        self.playlist_id = playlist_id
-        self.playlist_title = None
-        self.update_playlist_info()
+        for element in time_elements:
+            if 'H' in element:
+                hours = int(element[:-1])
+            elif 'M' in element:
+                if 'S' in element:
+                    minutes, seconds = map(int, element[:-1].split('M'))
+                else:
+                    minutes = int(element[:-1])
+            elif 'S' in element:
+                seconds = int(element[:-1])
 
-    def update_playlist_info(self):
-        request = Channel.get_service().playlists().list(
-            part="snippet",
-            id=self.playlist_id
-        )
-        response = request.execute()
-
-        playlist_info = response.get('items', [])
-        if playlist_info:
-            playlist_info = playlist_info[0]
-            snippet = playlist_info.get('snippet', {})
-            self.playlist_title = snippet.get('title', 'N/A')
-
-    def __str__(self):
-        return f"{self.title} ({self.video_url}, Playlist: {self.playlist_title})"
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
