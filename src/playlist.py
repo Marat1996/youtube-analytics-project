@@ -41,7 +41,8 @@ class PlayList(Channel):
         )
         response = request.execute()
         video_ids = [item['contentDetails']['videoId'] for item in response.get('items', [])]
-        self._videos = [Video(video_id) for video_id in video_ids]
+        self._videos = self.get_service().videos().list(part="contentDetails, statistics", id=','.join(video_ids)).execute()
+        # self._videos = [Video(video_id) for video_id in video_ids]
 
     def show_best_video(self):
         best_video = max(self._videos, key=lambda video: video.like_count, default=None)

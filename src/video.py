@@ -14,8 +14,17 @@ class Video:
         self.duration = duration
         self.url = f"https://www.youtube.com/watch?v={video_id}"  # Добавьте эту строку
 
-        if not all((title, video_url, view_count, like_count, duration)):
-            self.update_info()
+        try:
+            if not all((title, video_url, view_count, like_count, duration)):
+                self.update_info()
+        except Exception as e:
+            # Обработка исключения при ошибке запроса данных по API
+            print(f"Error updating video info: {e}")
+            self.title = None
+            self.video_url = None
+            self.view_count = None
+            self.like_count = None
+            self.duration = None
 
     def update_info(self):
         request = Channel.get_service().videos().list(
